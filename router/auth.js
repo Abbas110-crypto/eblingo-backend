@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 require("../db/connect");
-const { QuoteUser, Email_Database, ContactPageUser, AdminSignup_PageUser,Blog_Database } = require("../db/userSchema");
+const { Language, QuoteUser, Email_Database, ContactPageUser, AdminSignup_PageUser,Blog_Database } = require("../db/userSchema");
 const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
@@ -316,5 +316,49 @@ router.delete('/blogs/:id', async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
   }
 });
+router.get('/getlanguages', async (req, res) => {
+  try {
+    const languages = await Language.find();
+    console.log(languages);
+    res.json(languages);
+  } catch (error) {
+    console.error('Error getting languages:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.post('/languages', async (req, res) => {
+  try {
+    const { label, value, type } = req.body;
+    const language = new Language({ label, value, type, CreatedAt: currentDate });
+    const savedLanguage = await language.save();
+    res.json(savedLanguage);
+  } catch (error) {
+    console.error('Error creating language:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+router.delete('/languages/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    await Language.findByIdAndDelete(id);
+    res.json({ message: 'Language deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting language:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
+// router.get('/languagedata', async (req, res) => {
+//   try {
+//     const data = await Language.find();
+//     res.json(data);
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ error: 'Internal server error' });
+//   }
+// });
+
 
 module.exports = router;

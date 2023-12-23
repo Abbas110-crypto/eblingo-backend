@@ -31,7 +31,7 @@ const ContactuserSchema = new mongoose.Schema({
   message: {
     type: String,
   },
-  submissionDateTime: 
+  submissionDateTime:
   {
     type: String,
     required: true,
@@ -62,7 +62,7 @@ const QuoteUserSchema = new mongoose.Schema({
   uploadlink: {
     type: String,
   },
-  submissionDateTime: 
+  submissionDateTime:
   {
     type: String,
     required: true,
@@ -103,7 +103,7 @@ const EmailSchema = new mongoose.Schema({
   email: {
     type: String,
   },
-  submissionDateTime: 
+  submissionDateTime:
   {
     type: String,
     required: true,
@@ -121,20 +121,31 @@ const UpdateBlog = new mongoose.Schema({
   image: {
     type: String,
   },
-  description:{
-     type: String
+  description: {
+    type: String
   },
-  CreatedAt: 
+  CreatedAt:
   {
     type: String,
     required: true,
   },
   updatedAt:
   {
-    type:String,
-    required:true
+    type: String,
+    required: true
   }
 })
+
+const languageSchema = new mongoose.Schema({
+  label: String,
+  value: String,
+  type: String,
+  CreatedAt: {
+    type: String,
+    required: true,
+  }
+});
+
 
 AdminSignupUserSchema.pre('save', async function (next) {
   if (this.isModified('password')) {
@@ -155,8 +166,9 @@ AdminSignupUserSchema.methods.generateAuthToken = async function () {
   }
 }
 
-const Blog_Database = mongoose.model('Blog',UpdateBlog);
-const Email_Database = mongoose.model('email',EmailSchema);
+const Language = mongoose.model('Language', languageSchema);
+const Blog_Database = mongoose.model('Blog', UpdateBlog);
+const Email_Database = mongoose.model('email', EmailSchema);
 const AdminSignup_PageUser = mongoose.model('admin-signup-user', AdminSignupUserSchema);
 const ContactPageUser = mongoose.model('contact-user', ContactuserSchema);
 const QuoteUser = mongoose.model('quote-user', QuoteUserSchema);
@@ -167,4 +179,5 @@ module.exports = {
   QuoteUser,
   Email_Database,
   Blog_Database,
+  Language,
 };

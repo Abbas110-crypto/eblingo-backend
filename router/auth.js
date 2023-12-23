@@ -7,18 +7,50 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const sharp = require('sharp');
 const dayjs = require('dayjs');
+const path = require('path');
+const mimeTypes = require('mime-types');
 
-
-const storage = multer.diskStorage({
+const imageStorage = multer.diskStorage({
   destination: function (req, file, cb) {
-      cb(null, 'uploads/'); 
+    cb(null, path.join(__dirname, "/uploads/images/"));
   },
   filename: function (req, file, cb) {
-      cb(null, file.fieldname + '-' + Date.now());
-  },
+    cb(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
+  }
 });
 
-const upload = multer({ storage: storage });
+const imageFileFilter = function (req, file, callback) {
+  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
+
+  if (allowedImageTypes.includes(mimeTypes.lookup(file.originalname))) {
+    callback(null, true);
+  } else {
+    callback(new Error("Only images (JPEG, PNG, GIF) are allowed"));
+  }
+};
+
+const imageUpload = multer({ storage: imageStorage, fileFilter: imageFileFilter });
+
+const documentStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "/uploads/documents/"));
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
+  }
+});
+
+const documentFileFilter = function (req, file, callback) {
+  const allowedDocumentTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+
+  if (allowedDocumentTypes.includes(mimeTypes.lookup(file.originalname))) {
+    callback(null, true);
+  } else {
+    callback(new Error("Only documents (PDF, DOC, DOCX) are allowed"));
+  }
+};
+
+const documentUpload = multer({ storage: documentStorage, fileFilter: documentFileFilter });
 
 const currentD = dayjs().format('DD/MM/YYYY'); 
 const currentT = dayjs().format('hh:mm A'); 
@@ -139,23 +171,33 @@ router.post('/email', async (req, res) => {
 
 })
 
-router.post('/contact', async (req, res) => {
-  const { name, phone, email, sourceLanguage, targetLanguage, projectSize, uploadDocument, message } = req.body;
+router.post('/contact', documentUpload.single('document'), async (req, res) => {
+  const { name, phone, email, sourceLanguage, targetLanguage, projectSize, message,uploadDocument } = req.body;
 
-  if (!name || !email || !sourceLanguage || !targetLanguage ) {
-    return res.status(422).json({ error: "Please! filled the filled properly" });
-  }
   try {
-    const user = new ContactPageUser({ name, phone, email, sourceLanguage, targetLanguage, projectSize, uploadDocument, message, submissionDateTime: currentDate })
+    const user = new ContactPageUser({
+      name,
+      phone,
+      email,
+      sourceLanguage,
+      targetLanguage,
+      projectSize,
+      uploadDocument,
+      message,
+      submissionDateTime: currentDate,
+    });
+
+    // if (req.file) {
+    //   user.uploadDocument= req.file.path;
+    // }
+     
     await user.save();
-    res.status(201).json({ message: "Contact User Added Successfully" })
-
+    res.status(201).json({ message: "Contact User Added Successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Internal Server Error" });
   }
-  catch (err) {
-    console.log(err);
-  }
-
-})
+});
 router.get('/admin/dashboard/contact-table', async (req, res) => {
   try {
     const data = await ContactPageUser.find();
@@ -180,7 +222,7 @@ router.get('/admin/dashboard/getquote', async (req, res) => {
     console.log(err)
   }
 })
-router.post('/blogs', upload.single('image'), async (req, res) => {
+router.post('/blogs', imageUpload.single('image'), async (req, res) => {
   try {
     const { title, content, description } = req.body;
 
@@ -259,7 +301,7 @@ router.get('/blogs/:id', async (req, res) => {
   }
 });
 
-router.put('/updateblog/:id', upload.single('image'), async (req, res) => {
+router.put('/updateblog/:id', imageUpload.single('image'), async (req, res) => {
   const { id } = req.params;
 console.log(id);
 console.log(req.body);

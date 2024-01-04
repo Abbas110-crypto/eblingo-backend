@@ -7,50 +7,18 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const sharp = require('sharp');
 const dayjs = require('dayjs');
-const path = require('path');
-const mimeTypes = require('mime-types');
 
-const imageStorage = multer.diskStorage({
+
+const storageOriginal = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "/uploads/images/"));
+    cb(null, path.join(__dirname, 'uploads/originals/'));
   },
   filename: function (req, file, cb) {
-    cb(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
-  }
-});
-
-const imageFileFilter = function (req, file, callback) {
-  const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif'];
-
-  if (allowedImageTypes.includes(mimeTypes.lookup(file.originalname))) {
-    callback(null, true);
-  } else {
-    callback(new Error("Only images (JPEG, PNG, GIF) are allowed"));
-  }
-};
-
-const imageUpload = multer({ storage: imageStorage, fileFilter: imageFileFilter });
-
-const documentStorage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, "/uploads/documents/"));
+    cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
   },
-  filename: function (req, file, cb) {
-    cb(null, file.fieldname + "-" + Date.now() + path.extname(file.originalname));
-  }
 });
 
-const documentFileFilter = function (req, file, callback) {
-  const allowedDocumentTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-
-  if (allowedDocumentTypes.includes(mimeTypes.lookup(file.originalname))) {
-    callback(null, true);
-  } else {
-    callback(new Error("Only documents (PDF, DOC, DOCX) are allowed"));
-  }
-};
-
-const documentUpload = multer({ storage: documentStorage, fileFilter: documentFileFilter });
+const uploadOriginal = multer({ storage: storageOriginal });
 
 const currentD = dayjs().format('DD/MM/YYYY'); 
 const currentT = dayjs().format('hh:mm A'); 
@@ -171,8 +139,8 @@ router.post('/email', async (req, res) => {
 
 })
 
-router.post('/contact', documentUpload.single('document'), async (req, res) => {
-  const { name, phone, email, sourceLanguage, targetLanguage, projectSize, message,uploadDocument } = req.body;
+router.post('/contact', async (req, res) => {
+  const { name, phone, email, sourceLanguage, targetLanguage, projectSize, message } = req.body;
 
   try {
     const user = new ContactPageUser({
@@ -182,7 +150,6 @@ router.post('/contact', documentUpload.single('document'), async (req, res) => {
       sourceLanguage,
       targetLanguage,
       projectSize,
-      uploadDocument,
       message,
       submissionDateTime: currentDate,
     });
@@ -222,7 +189,7 @@ router.get('/admin/dashboard/getquote', async (req, res) => {
     console.log(err)
   }
 })
-router.post('/blogs', imageUpload.single('image'), async (req, res) => {
+router.post('/blogs', uploadOriginal.single('image'), async (req, res) => {
   try {
     const { title, content, description } = req.body;
 
@@ -301,7 +268,7 @@ router.get('/blogs/:id', async (req, res) => {
   }
 });
 
-router.put('/updateblog/:id', imageUpload.single('image'), async (req, res) => {
+router.put('/updateblog/:id', uploadOriginal.single('image'), async (req, res) => {
   const { id } = req.params;
 console.log(id);
 console.log(req.body);

@@ -217,7 +217,7 @@ router.post('/blogs', uploadOriginal.single('image'), async (req, res) => {
 router.get('/updateblog', async (req, res) => {
   try {
     const data = await Blog_Database.find();
-
+console.log(data);
     const convertedData = await Promise.all(data.map(async (item) => {
       if (item.image) {
         const convertedImageBuffer = await sharp(item.image).toFormat('jpeg').toBuffer();

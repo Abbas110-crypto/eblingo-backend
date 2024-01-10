@@ -7,11 +7,12 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const sharp = require('sharp');
 const dayjs = require('dayjs');
+const path = require('path');
 
 
 const storageOriginal = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, path.join(__dirname, 'uploads/originals/'));
+    cb(null, path.join(__dirname, 'uploads/'));
   },
   filename: function (req, file, cb) {
     cb(null, file.fieldname + '-' + Date.now() + path.extname(file.originalname));
@@ -216,7 +217,7 @@ router.post('/blogs', uploadOriginal.single('image'), async (req, res) => {
 router.get('/updateblog', async (req, res) => {
   try {
     const data = await Blog_Database.find();
-
+console.log(data);
     const convertedData = await Promise.all(data.map(async (item) => {
       if (item.image) {
         const convertedImageBuffer = await sharp(item.image).toFormat('jpeg').toBuffer();

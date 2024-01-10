@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const sharp = require('sharp');
 const dayjs = require('dayjs');
+const fs = require('fs');
+
 
 
 const storage = multer.diskStorage({
@@ -209,21 +211,29 @@ router.get('/updateblog', async (req, res) => {
     const data = await Blog_Database.find();
 
     const convertedData = await Promise.all(data.map(async (item) => {
-      if (item.image) {
-        const convertedImageBuffer = await sharp(item.image).toFormat('jpeg').toBuffer();
-        const convertedImageDataUrl = `data:image/jpeg;base64,${convertedImageBuffer.toString('base64')}`;
-        return { ...item.toObject(), image: convertedImageDataUrl };
+      if (item.image && fs.existsSync(item.image)) {
+        try {
+          const convertedImageBuffer = await sharp(item.image).toFormat('jpeg').toBuffer();
+          const convertedImageDataUrl = `data:image/jpeg;base64,${convertedImageBuffer.toString('base64')}`;
+          return { ...item.toObject(), image: convertedImageDataUrl };
+        } catch (sharpError) {
+          console.error('Error converting image:', sharpError);
+          // Handle the error or skip this item if conversion fails
+          return item;
+        }
+      } else {
+        console.warn('Image file not found for:', item);
+        // Handle the case where the image file is missing
+        return item;
       }
-      return item;
     }));
 
     res.json(convertedData);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 router.get('/blogs/top3', async (req, res) => {
   try {
     const topBlogs = await Blog_Database.find().limit(3).sort({ _id: 1 });

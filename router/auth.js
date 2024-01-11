@@ -31,6 +31,11 @@ router.get('/', (req,res) =>{
     'hello' :'welcome'
   });
 });
+router.get('/test', (req,res) =>{
+  res.json({
+    'hey' :'welcome to eblingo'
+  });
+});
 router.post('/register', async (req, res) => {
   const { name, username, email, password, cpassword } = req.body;
 

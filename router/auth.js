@@ -217,19 +217,23 @@ router.post('/blogs', uploadOriginal.single('image'), async (req, res) => {
 router.get('/updateblog', async (req, res) => {
   try {
     const data = await Blog_Database.find();
-console.log(data);
     const convertedData = await Promise.all(data.map(async (item) => {
-      if (item.image) {
-        const convertedImageBuffer = await sharp(item.image).toFormat('jpeg').toBuffer();
-        const convertedImageDataUrl = `data:image/jpeg;base64,${convertedImageBuffer.toString('base64')}`;
-        return { ...item.toObject(), image: convertedImageDataUrl };
+      try {
+        if (item.image) {
+          const convertedImageBuffer = await sharp(item.image).toFormat('jpeg').toBuffer();
+          const convertedImageDataUrl = `data:image/jpeg;base64,${convertedImageBuffer.toString('base64')}`;
+          return { ...item.toObject(), image: convertedImageDataUrl };
+        }
+        return item;
+      } catch (imageError) {
+        console.error('Error processing image:', imageError);
+        return item; // Return the original item if there's an error processing the image
       }
-      return item;
     }));
 
     res.json(convertedData);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

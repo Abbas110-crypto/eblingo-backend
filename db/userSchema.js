@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
-// mongodb+srv://eblingo-database:hOt8dcbsikMtl45V@cluster0.46frpkz.mongodb.net/eblingo-database?retryWrites=true&w=majority
 
 const ContactuserSchema = new mongoose.Schema({
   name: {

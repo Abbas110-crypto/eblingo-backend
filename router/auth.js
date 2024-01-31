@@ -255,6 +255,7 @@ router.get('/blogs/top3', async (req, res) => {
 
       return item;
     }));
+    console.log(convertedData, "sahddfhjhf");
     res.status(200).json(convertedData);
   } catch (error) {
     console.error('Error fetching top blogs:', error);
@@ -368,16 +369,6 @@ router.delete('/languages/:id', async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
-
-// router.get('/languagedata', async (req, res) => {
-//   try {
-//     const data = await Language.find();
-//     res.json(data);
-//   } catch (err) {
-//     console.log(err);
-//     res.status(500).json({ error: 'Internal server error' });
-//   }
-// });
 
 
 module.exports = router;

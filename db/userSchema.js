@@ -9,22 +9,20 @@ const ContactuserSchema = new mongoose.Schema({
     required: true,
   },
   phone: {
-    type: String,
+    type: Number
   },
   email: {
     type: String,
     required: true,
   },
   sourceLanguage: {
-    type: String,
-    required: true,
+    type: Array,
   },
   targetLanguage: {
-    type: String,
-    required: true,
+    type: Array,
   },
   projectSize: {
-    type: String,
+    type: Number
   },
   uploadDocument: {
     type: Array,
@@ -35,7 +33,6 @@ const ContactuserSchema = new mongoose.Schema({
   submissionDateTime:
   {
     type: String,
-    required: true,
   }
 })
 

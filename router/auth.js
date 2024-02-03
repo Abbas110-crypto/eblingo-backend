@@ -146,7 +146,13 @@ router.post('/email', async (req, res) => {
 })
 
 router.post('/contact', async (req, res) => {
+  
   const { name, phone, email, sourceLanguage, targetLanguage, projectSize, message } = req.body;
+  console.log(req.body);
+
+  if (!name || !email) {
+    return res.status(400).json({ error: "Name and email are required fields" });
+  }
 
   try {
     const user = new ContactPageUser({
@@ -159,11 +165,6 @@ router.post('/contact', async (req, res) => {
       message,
       submissionDateTime: currentDate,
     });
-
-    // if (req.file) {
-    //   user.uploadDocument= req.file.path;
-    // }
-     
     await user.save();
     res.status(201).json({ message: "Contact User Added Successfully" });
   } catch (err) {
@@ -171,6 +172,8 @@ router.post('/contact', async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+
 router.get('/admin/dashboard/contact-table', async (req, res) => {
   try {
     const data = await ContactPageUser.find();

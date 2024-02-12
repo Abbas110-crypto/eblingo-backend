@@ -8,6 +8,8 @@ const multer = require('multer');
 const sharp = require('sharp');
 const dayjs = require('dayjs');
 const path = require('path');
+const { sendEmail } = require('./sendEmail');
+const { quotesendEmail } = require('./quotesendEmail');
 
 
 const storageOriginal = multer.diskStorage({
@@ -119,8 +121,8 @@ router.post('/get-a-quote', async (req, res) => {
   try {
     const user = new QuoteUser({ name, email, sourceLanguage, targetLanguage, services, uploadlink, submissionDateTime: currentDate })
     await user.save();
-    res.status(201).json({ message: "Get-Quote User Added Successfully" })
-
+    await quotesendEmail(req.body);
+    res.status(201).json({ message: "Get-Quote User Added Successfully" }) 
   }
   catch (err) {
     console.log(err);
@@ -166,6 +168,7 @@ router.post('/contact', async (req, res) => {
       submissionDateTime: currentDate,
     });
     await user.save();
+    await sendEmail(req.body);
     res.status(201).json({ message: "Contact User Added Successfully" });
   } catch (err) {
     console.error(err);

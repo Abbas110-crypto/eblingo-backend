@@ -115,7 +115,7 @@ router.get('/admin/dashboard', verifyToken, async (req, res) => {
 router.post('/get-a-quote', async (req, res) => {
   const { name, email, sourceLanguage, targetLanguage, services, uploadlink } = req.body;
 
-  if (!name || !email || !sourceLanguage || !targetLanguage || !services || !uploadlink) {
+  if (!name || !email || !sourceLanguage || !targetLanguage || !services ) {
     return res.status(422).json({ error: "Please! filled the filled properly" });
   }
   try {
@@ -149,7 +149,7 @@ router.post('/email', async (req, res) => {
 
 router.post('/contact', async (req, res) => {
   
-  const { name, phone, email, sourceLanguage, targetLanguage, projectSize, message } = req.body;
+  const { name, email, sourceLanguage, targetLanguage, projectSize } = req.body;
   console.log(req.body);
 
   if (!name || !email) {
@@ -159,12 +159,10 @@ router.post('/contact', async (req, res) => {
   try {
     const user = new ContactPageUser({
       name,
-      phone,
       email,
       sourceLanguage,
       targetLanguage,
       projectSize,
-      message,
       submissionDateTime: currentDate,
     });
     await user.save();
@@ -197,7 +195,7 @@ router.get('/admin/dashboard/getquote', async (req, res) => {
   try {
     const data = await QuoteUser.find();
     res.json(data);
-  } catch(err) {
+  } catch(err) {  
     console.log(err)
   }
 })

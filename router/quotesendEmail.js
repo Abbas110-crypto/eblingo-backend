@@ -13,18 +13,25 @@ const transporter = nodemailer.createTransport({
 async function quotesendEmail(userData) {
   try {
     const mailOptions = {
-      from: `${userData.email}`,
-      to: `${process.env.EMAIL}`,
-      subject: 'New Get-a-Quote Form Submission',
-      html: `<p>New Quote Request</p>
-             <ul>
-               <li>Name: ${userData.name}</li>
-               <li>Email: ${userData.email}</li>
-               <li>Source Language: ${userData.sourceLanguage}</li>
-               <li>Target Language: ${userData.targetLanguage}</li>
-               <li>Services: ${userData.services}</li>
-               <li>Upload Link: ${userData.uploadlink}</li>
-             </ul>`
+      to: `${process.env.INFOEMAIL}`,
+      subject: 'New Qoutation Submission Received | Eblingo',
+      html: `<p>
+      This is an auto-generated email to inform you that you've received a new submission through the qoutation form on your website. Please find the details of the submission below for your review and action.
+      <br />
+      Submission Details: <br />
+      Name:  ${userData.name} <br />
+      Email: ${userData.email} <br />
+      Source Language:  ${userData.sourceLanguage} <br />
+      Target Language:  ${userData.targetLanguage} <br />
+      Project Size: ${userData.services} <br />
+      Upload Link: ${userData.uploadlink} <br />
+      <br />
+      Please take the necessary steps to follow up on this submission as appropriate. Should you require any further information or assistance, feel free to contact the user directly through the provided email or phone number.
+      <br />
+      Thank you for your attention to this matter.<br />
+      <br />
+      Eblingo Automated System
+            </p>`
     };
 
     await transporter.sendMail(mailOptions);

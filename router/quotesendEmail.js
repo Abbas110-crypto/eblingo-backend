@@ -1,10 +1,12 @@
 const nodemailer = require("nodemailer");
+const dotenv = require('dotenv');
+dotenv.config({ path: '../config.env' });
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'farazsafdar110.af@gmail.com',
-    pass: 'nrbj pogv qkas jczh'
+    user: `${process.env.EMAIL}`,
+    pass: `${process.env.PASSWORD}`
   }
 });
 
@@ -12,7 +14,7 @@ async function quotesendEmail(userData) {
   try {
     const mailOptions = {
       from: `${userData.email}`,
-      to: 'farazsafdar110.af@gmail.com',
+      to: `${process.env.EMAIL}`,
       subject: 'New Get-a-Quote Form Submission',
       html: `<p>New Quote Request</p>
              <ul>

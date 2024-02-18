@@ -8,27 +8,23 @@ const ContactuserSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  phone: {
-    type: Number
-  },
   email: {
     type: String,
     required: true,
   },
   sourceLanguage: {
     type: Array,
+    required: true,
   },
   targetLanguage: {
     type: Array,
+    required: true,
   },
   projectSize: {
     type: Number
   },
   uploadDocument: {
     type: Array,
-  },
-  message: {
-    type: String,
   },
   submissionDateTime:
   {

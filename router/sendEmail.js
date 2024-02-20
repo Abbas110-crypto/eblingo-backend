@@ -23,7 +23,8 @@ async function sendEmail(userData) {
       Email: ${userData.email}<br />
       Source Language: ${userData.sourceLanguage}<br />
       Target Language: ${userData.targetLanguage}<br />
-      Project Size: ${userData.projectSize}<br />
+      Project Size: ${userData.services}<br />
+      Upload Link: ${userData.uploadlink}<br />
       <br />
       Please take the necessary steps to follow up on this submission as appropriate. Should you require any further information or assistance, feel free to contact the user directly through the provided email or phone number.
       <br />

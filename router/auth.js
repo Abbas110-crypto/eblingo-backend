@@ -149,10 +149,8 @@ router.post('/email', async (req, res) => {
 
 router.post('/contact', async (req, res) => {
   
-  const { name, email, sourceLanguage, targetLanguage, projectSize } = req.body;
-  console.log(req.body);
-
-  if (!name || !email) {
+  const { name, email, sourceLanguage, targetLanguage, services, uploadlink } = req.body;  console.log(req.body);
+  if (!name || !email || !sourceLanguage || !targetLanguage || !services) {
     return res.status(400).json({ error: "Name and email are required fields" });
   }
 
@@ -162,7 +160,8 @@ router.post('/contact', async (req, res) => {
       email,
       sourceLanguage,
       targetLanguage,
-      projectSize,
+      services,
+      uploadlink,
       submissionDateTime: currentDate,
     });
     await user.save();

@@ -20,11 +20,11 @@ const ContactuserSchema = new mongoose.Schema({
     type: Array,
     required: true,
   },
-  projectSize: {
-    type: Number
-  },
-  uploadDocument: {
+  services: {
     type: Array,
+  },
+  uploadlink: {
+    type: String,
   },
   submissionDateTime:
   {

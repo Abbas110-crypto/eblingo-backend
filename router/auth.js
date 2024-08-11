@@ -59,7 +59,7 @@ router.post('/register', async (req, res) => {
 
   }
   catch (err) {
-    console.log(err);
+    res.status(400).json({ error: "Invalid Credientials" })
   }
 
 })
@@ -88,16 +88,15 @@ router.post('/login', async (req, res) => {
       }
     }
     else {
-      res.status(400).json({ error: "Invalid Credientials" })
+      res.status(400).json({ error: "Invalid Credientials" });
     }
   }
   catch (err) {
-    console.log(err);
+    res.status(400).json({ error: "Invalid Internal error" });
   }
 })
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization.split(" ")[1];
-  console.log(token);
   if (!token) {
     return res.status(403).json({ error: 'Token not provided' });
   }
@@ -125,17 +124,17 @@ router.get('/admin/dashboard', verifyToken, async (req, res) => {
 });
 
 router.post('/get-a-quote', async (req, res) => {
-  const { name, email, sourceLanguage, targetLanguage, services, uploadlink, recaptchaResponse } = req.body;
-
+  const { name, email, sourceLanguage, targetLanguage, services, uploadlink } = req.body;
+  // , recaptchaResponse
   if (!name || !email || !sourceLanguage || !targetLanguage || !services ) {
     return res.status(422).json({ error: "Please! filled the filled properly" });
   }
   try {
-    const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
+    // const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
 
-    if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
-      return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
-    }
+    // if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
+    //   return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
+    // }
     const user = new QuoteUser({ name, email, sourceLanguage, targetLanguage, services, uploadlink, submissionDateTime: currentDate })
     await user.save();
     // await quotesendEmail(req.body);
@@ -167,17 +166,18 @@ router.post('/email', async (req, res) => {
 
 router.post('/contact', async (req, res) => {
   
-  const { name, email, sourceLanguage, targetLanguage, services, uploadlink, recaptchaResponse } = req.body;  
+  const { name, email, sourceLanguage, targetLanguage, services, uploadlink} = req.body;
+  // , recaptchaResponse   
   if (!name || !email || !sourceLanguage || !targetLanguage || !services ) {
     return res.status(400).json({ error: "Name and email are required fields" });
   }
 
   try {
-   const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
+  //  const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
 
-   if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
-     return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
-   }
+  //  if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
+  //    return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
+  //  }
     const user = new ContactPageUser({
       name,
       email,

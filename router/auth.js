@@ -59,7 +59,7 @@ router.post('/register', async (req, res) => {
 
   }
   catch (err) {
-    console.log(err);
+    res.status(400).json({ error: "Invalid Credientials" })
   }
 
 })
@@ -88,16 +88,15 @@ router.post('/login', async (req, res) => {
       }
     }
     else {
-      res.status(400).json({ error: "Invalid Credientials" })
+      res.status(400).json({ error: "Invalid Credientials" });
     }
   }
   catch (err) {
-    console.log(err);
+    res.status(400).json({ error: "Invalid Internal error" });
   }
 })
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization.split(" ")[1];
-  console.log(token);
   if (!token) {
     return res.status(403).json({ error: 'Token not provided' });
   }
@@ -116,7 +115,6 @@ async function verifyRecaptcha(recaptchaResponse, remoteIp) {
     const response = await axios.get(verifyUrl); // Use axios.get instead of axios.post
     return response.data;
   } catch (error) {
-    console.error('Error verifying reCAPTCHA:', error);
     return { success: false };
   }
 }
@@ -126,25 +124,24 @@ router.get('/admin/dashboard', verifyToken, async (req, res) => {
 });
 
 router.post('/get-a-quote', async (req, res) => {
-  const { name, email, sourceLanguage, targetLanguage, services, uploadlink, recaptchaResponse } = req.body;
-
+  const { name, email, sourceLanguage, targetLanguage, services, uploadlink } = req.body;
+  // , recaptchaResponse
   if (!name || !email || !sourceLanguage || !targetLanguage || !services ) {
     return res.status(422).json({ error: "Please! filled the filled properly" });
   }
   try {
-    const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
+    // const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
 
-    if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
-     console.error('reCAPTCHA verification failed:', recaptchaResult['error-codes']);
-      return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
-    }
+    // if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
+    //   return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
+    // }
     const user = new QuoteUser({ name, email, sourceLanguage, targetLanguage, services, uploadlink, submissionDateTime: currentDate })
     await user.save();
     // await quotesendEmail(req.body);
     res.status(201).json({ message: "Get-Quote User Added Successfully" }) 
   }
   catch (err) {
-    console.log(err);
+    res.status(400).json({ error: "Get-Quote User Not Added" }) 
   }
 
 })
@@ -161,26 +158,26 @@ router.post('/email', async (req, res) => {
     res.status(201).json({ message: "User Email Added Successfully" })
   }
   catch (err) {
-    console.log(err);
+    res.status(400).json({ message: "User Email Not Added" })
+
   }
 
 })
 
 router.post('/contact', async (req, res) => {
   
-  const { name, email, sourceLanguage, targetLanguage, services, uploadlink, recaptchaResponse } = req.body;  
-  console.log(req.body);
+  const { name, email, sourceLanguage, targetLanguage, services, uploadlink} = req.body;
+  // , recaptchaResponse   
   if (!name || !email || !sourceLanguage || !targetLanguage || !services ) {
     return res.status(400).json({ error: "Name and email are required fields" });
   }
 
   try {
-   const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
+  //  const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
 
-   if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
-    console.error('reCAPTCHA verification failed:', recaptchaResult['error-codes']);
-     return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
-   }
+  //  if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
+  //    return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
+  //  }
     const user = new ContactPageUser({
       name,
       email,
@@ -194,7 +191,6 @@ router.post('/contact', async (req, res) => {
     // await sendEmail(req.body);
     res.status(201).json({ message: "Contact User Added Successfully" });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
@@ -205,7 +201,7 @@ router.get('/admin/dashboard/contact-table', async (req, res) => {
     const data = await ContactPageUser.find();
     res.json(data);
   } catch(err) {
-    console.log(err)
+    res.status(500).json({ error: "Internal Server Error" });
   }
 })
 router.get('/admin/dashboard/connect-email', async (req, res) => {
@@ -213,7 +209,7 @@ router.get('/admin/dashboard/connect-email', async (req, res) => {
     const data = await Email_Database.find();
     res.json(data);
   } catch(err) {
-    console.log(err)
+    res.status(500).json({ error: "Internal Server Error" });
   }
 })
 router.get('/admin/dashboard/getquote', async (req, res) => {
@@ -221,7 +217,7 @@ router.get('/admin/dashboard/getquote', async (req, res) => {
     const data = await QuoteUser.find();
     res.json(data);
   } catch(err) {  
-    console.log(err)
+    res.status(500).json({ error: "Internal Server Error" });
   }
 })
 router.post('/blogs', uploadOriginal.single('image'), async (req, res) => {
@@ -237,13 +233,12 @@ router.post('/blogs', uploadOriginal.single('image'), async (req, res) => {
       updatedAt : currentDate
     });
 
-    console.log('Received data:', { title, content, description , image: req.file });
+    // console.log('Received data:', { title, content, description , image: req.file });
 
     await newBlog.save();
 
     res.status(201).json({ success: true, message: 'Blog post created successfully', blog: newBlog });
   } catch (error) {
-    console.error('Error creating blog post:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -260,14 +255,12 @@ router.get('/updateblog', async (req, res) => {
         }
         return item;
       } catch (imageError) {
-        console.error('Error processing image:', imageError);
         return item; // Return the original item if there's an error processing the image
       }
     }));
 
     res.json(convertedData);
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -284,10 +277,8 @@ router.get('/blogs/top3', async (req, res) => {
 
       return item;
     }));
-    console.log(convertedData, "sahddfhjhf");
     res.status(200).json(convertedData);
   } catch (error) {
-    console.error('Error fetching top blogs:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -297,21 +288,17 @@ router.get('/blogs/:id', async (req, res) => {
 
   try {
       const blog = await Blog_Database.findById(id);
-      console.log(blog);
       if (!blog) {
           return res.status(404).json({ message: 'Blog not found' });
       }     
       res.status(200).json(blog);
   } catch (error) {
-      console.error('Error individual blog:', error);
       res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
 router.put('/updateblog/:id', uploadOriginal.single('image'), async (req, res) => {
   const { id } = req.params;
-console.log(id);
-console.log(req.body);
 const currentD1 = dayjs().format('DD/MM/YYYY'); 
 const currentT1 = dayjs().format('hh:mm A'); 
 
@@ -329,22 +316,12 @@ const currentDate1 = `Date: ${currentD1}\nTime: ${currentT1}`;
       if (req.file) {
           updatedBlog.image = req.file.path;
       }
-      console.log('---------------------------')
-      console.log(updatedBlog)
-      console.log('---------------------------')
-
-      const blog = await Blog_Database.findByIdAndUpdate(id, updatedBlog);
-      console.log('------------****---------------')
-       console.log(blog);
-      console.log('------------****---------------')
-
       if (!blog) {
           return res.status(404).json({ message: 'Blog not found' });
       }
 
       res.status(200).json({ success: true, message: 'Blog updated successfully', blog });
   } catch (error) {
-      console.error('Error updating blog post:', error);
       res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -361,17 +338,14 @@ router.delete('/blogs/:id', async (req, res) => {
 
       res.status(200).json({ success: true, message: 'Blog deleted successfully' });
   } catch (error) {
-      console.error('Error deleting blog:', error);
       res.status(500).json({ error: 'Internal server error' });
   }
 });
 router.get('/getlanguages', async (req, res) => {
   try {
     const languages = await Language.find();
-    console.log(languages);
     res.json(languages);
   } catch (error) {
-    console.error('Error getting languages:', error);
     res.status(500).send('Internal Server Error');
   }
 });
@@ -383,7 +357,6 @@ router.post('/languages', async (req, res) => {
     const savedLanguage = await language.save();
     res.json(savedLanguage);
   } catch (error) {
-    console.error('Error creating language:', error);
     res.status(500).send('Internal Server Error');
   }
 });
@@ -394,7 +367,6 @@ router.delete('/languages/:id', async (req, res) => {
     await Language.findByIdAndDelete(id);
     res.json({ message: 'Language deleted successfully' });
   } catch (error) {
-    console.error('Error deleting language:', error);
     res.status(500).send('Internal Server Error');
   }
 });

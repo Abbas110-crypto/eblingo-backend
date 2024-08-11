@@ -8,6 +8,7 @@ const multer = require('multer');
 const sharp = require('sharp');
 const dayjs = require('dayjs');
 const path = require('path');
+const axios = require('axios');
 const { sendEmail } = require('./sendEmail');
 const { quotesendEmail } = require('./quotesendEmail');
 
@@ -107,21 +108,39 @@ const verifyToken = (req, res, next) => {
   next();
 };
 
+async function verifyRecaptcha(recaptchaResponse, remoteIp) {
+  const secretKey = '6LdD0iMqAAAAAEGo7PgRKvRjLvFQfHtVxCwJNdWn' ; // Replace with your actual secret key from Google reCAPTCHA
+  const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaResponse}&remoteip=${remoteIp}`;
+
+  try {
+    const response = await axios.get(verifyUrl); // Use axios.get instead of axios.post
+    return response.data;
+  } catch (error) {
+    console.error('Error verifying reCAPTCHA:', error);
+    return { success: false };
+  }
+}
 router.get('/admin/dashboard', verifyToken, async (req, res) => {
   const user = await AdminSignup_PageUser.findById(req.user);
   res.json(user.name)
 });
 
 router.post('/get-a-quote', async (req, res) => {
-  const { name, email, sourceLanguage, targetLanguage, services, uploadlink } = req.body;
+  const { name, email, sourceLanguage, targetLanguage, services, uploadlink, recaptchaResponse } = req.body;
 
   if (!name || !email || !sourceLanguage || !targetLanguage || !services ) {
     return res.status(422).json({ error: "Please! filled the filled properly" });
   }
   try {
+    const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
+
+    if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
+     console.error('reCAPTCHA verification failed:', recaptchaResult['error-codes']);
+      return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
+    }
     const user = new QuoteUser({ name, email, sourceLanguage, targetLanguage, services, uploadlink, submissionDateTime: currentDate })
     await user.save();
-    await quotesendEmail(req.body);
+    // await quotesendEmail(req.body);
     res.status(201).json({ message: "Get-Quote User Added Successfully" }) 
   }
   catch (err) {
@@ -149,12 +168,19 @@ router.post('/email', async (req, res) => {
 
 router.post('/contact', async (req, res) => {
   
-  const { name, email, sourceLanguage, targetLanguage, services, uploadlink } = req.body;  console.log(req.body);
-  if (!name || !email || !sourceLanguage || !targetLanguage || !services) {
+  const { name, email, sourceLanguage, targetLanguage, services, uploadlink, recaptchaResponse } = req.body;  
+  console.log(req.body);
+  if (!name || !email || !sourceLanguage || !targetLanguage || !services ) {
     return res.status(400).json({ error: "Name and email are required fields" });
   }
 
   try {
+   const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
+
+   if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
+    console.error('reCAPTCHA verification failed:', recaptchaResult['error-codes']);
+     return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
+   }
     const user = new ContactPageUser({
       name,
       email,
@@ -165,7 +191,7 @@ router.post('/contact', async (req, res) => {
       submissionDateTime: currentDate,
     });
     await user.save();
-    await sendEmail(req.body);
+    // await sendEmail(req.body);
     res.status(201).json({ message: "Contact User Added Successfully" });
   } catch (err) {
     console.error(err);

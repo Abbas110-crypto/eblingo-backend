@@ -107,17 +107,6 @@ const verifyToken = (req, res, next) => {
   next();
 };
 
-async function verifyRecaptcha(recaptchaResponse, remoteIp) {
-  const secretKey = '6LdD0iMqAAAAAEGo7PgRKvRjLvFQfHtVxCwJNdWn' ; // Replace with your actual secret key from Google reCAPTCHA
-  const verifyUrl = `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaResponse}&remoteip=${remoteIp}`;
-
-  try {
-    const response = await axios.get(verifyUrl); // Use axios.get instead of axios.post
-    return response.data;
-  } catch (error) {
-    return { success: false };
-  }
-}
 router.get('/admin/dashboard', verifyToken, async (req, res) => {
   const user = await AdminSignup_PageUser.findById(req.user);
   res.json(user.name)
@@ -137,7 +126,7 @@ router.post('/get-a-quote', async (req, res) => {
     // }
     const user = new QuoteUser({ name, email, sourceLanguage, targetLanguage, services, uploadlink, submissionDateTime: currentDate })
     await user.save();
-    // await quotesendEmail(req.body);
+    await quotesendEmail(req.body);
     res.status(201).json({ message: "Get-Quote User Added Successfully" }) 
   }
   catch (err) {
@@ -147,37 +136,41 @@ router.post('/get-a-quote', async (req, res) => {
 })
 
 router.post('/email', async (req, res) => {
-  const { email } = req.body;
+  const { email, recaptchaToken } = req.body;
 
-  if (!email) {
-    return res.status(422).json({ error: "Please! filled the filled properly" });
+  if (!email || !recaptchaToken) {
+      return res.status(422).json({ error: "Please fill the fields properly" });
   }
+
   try {
-    const user = new Email_Database({ email,submissionDateTime: currentDate })
-    await user.save();
-    res.status(201).json({ message: "User Email Added Successfully" })
-  }
-  catch (err) {
-    res.status(400).json({ message: "User Email Not Added" })
+      // Verify reCAPTCHA
+      const secretKey = '6LdD0iMqAAAAAEGo7PgRKvRjLvFQfHtVxCwJNdWn';
+      const recaptchaResponse = await axios.post(
+          `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`
+      );
 
-  }
+      if (!recaptchaResponse.data.success) {
+          return res.status(400).json({ message: "reCAPTCHA verification failed" });
+      }
 
-})
+      // If reCAPTCHA is verified, save the email
+      const user = new Email_Database({ email, submissionDateTime: new Date() });
+      await user.save();
+      res.status(201).json({ message: "User Email Added Successfully" });
+  } catch (err) {
+      res.status(400).json({ message: "User Email Not Added" });
+  }
+});
 
 router.post('/contact', async (req, res) => {
   
-  const { name, email, sourceLanguage, targetLanguage, services, uploadlink} = req.body;
-  // , recaptchaResponse   
-  if (!name || !email || !sourceLanguage || !targetLanguage || !services ) {
+  const { name, email, sourceLanguage, targetLanguage, services, uploadlink, recaptchaResponse} = req.body;
+  if (!name || !email || !sourceLanguage || !targetLanguage  ) {
     return res.status(400).json({ error: "Name and email are required fields" });
   }
 
   try {
-  //  const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
-
-  //  if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
-  //    return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
-  //  }
+     
     const user = new ContactPageUser({
       name,
       email,
@@ -188,7 +181,7 @@ router.post('/contact', async (req, res) => {
       submissionDateTime: currentDate,
     });
     await user.save();
-    // await sendEmail(req.body);
+    await sendEmail(req.body);
     res.status(201).json({ message: "Contact User Added Successfully" });
   } catch (err) {
     res.status(500).json({ error: "Internal Server Error" });
@@ -233,12 +226,13 @@ router.post('/blogs', uploadOriginal.single('image'), async (req, res) => {
       updatedAt : currentDate
     });
 
-    // console.log('Received data:', { title, content, description , image: req.file });
+    console.log('Received data:', { title, content, description , image: req.file });
 
     await newBlog.save();
 
     res.status(201).json({ success: true, message: 'Blog post created successfully', blog: newBlog });
   } catch (error) {
+    console.error('Error creating blog post:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -255,12 +249,14 @@ router.get('/updateblog', async (req, res) => {
         }
         return item;
       } catch (imageError) {
+        console.error('Error processing image:', imageError);
         return item; // Return the original item if there's an error processing the image
       }
     }));
 
     res.json(convertedData);
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -277,8 +273,10 @@ router.get('/blogs/top3', async (req, res) => {
 
       return item;
     }));
+    console.log(convertedData, "sahddfhjhf");
     res.status(200).json(convertedData);
   } catch (error) {
+    console.error('Error fetching top blogs:', error);
     res.status(500).json({ error: 'Internal Server Error' });
   }
 });
@@ -288,17 +286,21 @@ router.get('/blogs/:id', async (req, res) => {
 
   try {
       const blog = await Blog_Database.findById(id);
+      console.log(blog);
       if (!blog) {
           return res.status(404).json({ message: 'Blog not found' });
       }     
       res.status(200).json(blog);
   } catch (error) {
+      console.error('Error individual blog:', error);
       res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
 router.put('/updateblog/:id', uploadOriginal.single('image'), async (req, res) => {
   const { id } = req.params;
+console.log(id);
+console.log(req.body);
 const currentD1 = dayjs().format('DD/MM/YYYY'); 
 const currentT1 = dayjs().format('hh:mm A'); 
 
@@ -316,12 +318,22 @@ const currentDate1 = `Date: ${currentD1}\nTime: ${currentT1}`;
       if (req.file) {
           updatedBlog.image = req.file.path;
       }
+      console.log('---------------------------')
+      console.log(updatedBlog)
+      console.log('---------------------------')
+
+      const blog = await Blog_Database.findByIdAndUpdate(id, updatedBlog);
+      console.log('------------****---------------')
+       console.log(blog);
+      console.log('------------****---------------')
+
       if (!blog) {
           return res.status(404).json({ message: 'Blog not found' });
       }
 
       res.status(200).json({ success: true, message: 'Blog updated successfully', blog });
   } catch (error) {
+      console.error('Error updating blog post:', error);
       res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -338,9 +350,11 @@ router.delete('/blogs/:id', async (req, res) => {
 
       res.status(200).json({ success: true, message: 'Blog deleted successfully' });
   } catch (error) {
+      console.error('Error deleting blog:', error);
       res.status(500).json({ error: 'Internal server error' });
   }
 });
+
 router.get('/getlanguages', async (req, res) => {
   try {
     const languages = await Language.find();

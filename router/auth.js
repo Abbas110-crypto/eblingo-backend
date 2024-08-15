@@ -147,37 +147,41 @@ router.post('/get-a-quote', async (req, res) => {
 })
 
 router.post('/email', async (req, res) => {
-  const { email } = req.body;
+  const { email, recaptchaToken } = req.body;
 
-  if (!email) {
-    return res.status(422).json({ error: "Please! filled the filled properly" });
+  if (!email || !recaptchaToken) {
+      return res.status(422).json({ error: "Please fill the fields properly" });
   }
+
   try {
-    const user = new Email_Database({ email,submissionDateTime: currentDate })
-    await user.save();
-    res.status(201).json({ message: "User Email Added Successfully" })
-  }
-  catch (err) {
-    res.status(400).json({ message: "User Email Not Added" })
+      // Verify reCAPTCHA
+      const secretKey = '6LdD0iMqAAAAAEGo7PgRKvRjLvFQfHtVxCwJNdWn';
+      const recaptchaResponse = await axios.post(
+          `https://www.google.com/recaptcha/api/siteverify?secret=${secretKey}&response=${recaptchaToken}`
+      );
 
-  }
+      if (!recaptchaResponse.data.success) {
+          return res.status(400).json({ message: "reCAPTCHA verification failed" });
+      }
 
-})
+      // If reCAPTCHA is verified, save the email
+      const user = new Email_Database({ email, submissionDateTime: new Date() });
+      await user.save();
+      res.status(201).json({ message: "User Email Added Successfully" });
+  } catch (err) {
+      res.status(400).json({ message: "User Email Not Added" });
+  }
+});
 
 router.post('/contact', async (req, res) => {
   
   const { name, email, sourceLanguage, targetLanguage, services, uploadlink} = req.body;
-  // , recaptchaResponse   
-  if (!name || !email || !sourceLanguage || !targetLanguage || !services ) {
+  if (!name || !email || !sourceLanguage || !targetLanguage  ) {
     return res.status(400).json({ error: "Name and email are required fields" });
   }
 
   try {
-  //  const recaptchaResult = await verifyRecaptcha(recaptchaResponse, req.ip);
 
-  //  if (!recaptchaResult.success || recaptchaResult.score < 0.5) {
-  //    return res.status(400).json({ error: "Invalid or suspicious reCAPTCHA response" });
-  //  }
     const user = new ContactPageUser({
       name,
       email,
